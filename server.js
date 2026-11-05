@@ -314,6 +314,39 @@ app.delete("/api/admin/products/:id", admin, (req, res) => {
   res.json({ success: true });
 });
 
-// SERVER
+// SERVER// RESET ADMIN PASSWORD
+app.post("/api/reset-admin", (req, res) => {
+  try {
+    const { key, password } = req.body;
+
+    if (!process.env.ADMIN_SETUP_KEY ||
+        key !== process.env.ADMIN_SETUP_KEY) {
+      return res.status(403).json({
+        success: false,
+        error: "Invalid reset key"
+      });
+    }
+
+    if (!password || password.length < 10) {
+      return res.status(400).json({
+        success: false,
+        error: "Password minimum 10 characters"
+      });
+    }
+
+    const hashed = bcrypt.hashSync(password, 12);
+
+    db.prepare(
+      "UPDATE admins SET password = ? WHERE id = 1"
+    ).run(hashed);
+
+    res.json({ success: true });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      error: "Password reset failed"
+    });
+  }
+});
 app.listen(PORT, "0.0.0.0", () => {
   console.log("Aaliya Collection running
